@@ -7,6 +7,7 @@ An enterprise-grade, zero-cost automated workflow built for **Nederlands de Baas
 ```text
 [Google Form] ➡️ [Google Sheets] ➡️ [Self-Hosted n8n] ➡️ [Google Gemini 1.5 Flash API] ➡️ [monday.com Board Item] ➡️ [Gmail Notifications]
 ```
+Workflow Video : https://youtu.be/ftjJiQj0--I
 * **Intake:** External partners submit partnership or event inquiries via a custom Google Form. Responses automatically populate a linked Google Sheet.
 * **Trigger & Extraction:** A row-added event triggers a self-hosted n8n automation instance.
 * **AI-Powered Triage:** An HTTP Request node sends the payload to Google Gemini 1.5 Flash, which analyzes the request context, assigns an urgency priority (`Low`, `Medium`, `High`), categorizes the organization type, generates brief internal notes, and routes the task to a designated employee.
