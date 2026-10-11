@@ -45,7 +45,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=AIzaSyAuZQcHclyg1pVrhXpyeCkwAUsRBuYW-VI",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=APIKEY",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"contents\": [\n    {\n      \"parts\": [\n        {\n          \"text\": \"You are an automated triage assistant for 'Nederlands de Baas'. Analyze this inbound inquiry and output a clean JSON object with NO markdown formatting (no ```json tags), containing exactly these keys:\\n- 'notes': Write a summaryization of the event/ collaboration. \\n- 'priority': choose strictly from ['High', 'Medium', 'Low'] based on urgency.\\n- 'category': choose strictly from ['Education', 'Corporate', 'Administrative', 'General'] based on the organization type and request.\\n- 'suggestedOwner': assign to 'Anna' if education/training related, or 'Mark' if corporate/administrative.\\n\\nInquiry Data:\\n- Organization:{{ $json['Name of the organization / company '] }} \\n- Org Type:{{ $json['  Type of organization  '] }}\\n- Contact:{{ $json['  Contact Person Full Name'] }} \\n- Details:{{ $json['  Request Type / Details (Explain the event/ collaboration request clearly)'] }} \\n- Intended start date: {{ $json['Intended start date or event date'] }} \"\n        }\n      ]\n    }\n  ]\n}",
