@@ -1,0 +1,225 @@
+{
+  "name": "Request Intake & Triage Assistant",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1MBkdU2IwJy7J66BnEKzqLjp7JKGo6hJB8cD6iPDzw4c",
+          "mode": "list",
+          "cachedResultName": "📝 Collaboration Request with us (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MBkdU2IwJy7J66BnEKzqLjp7JKGo6hJB8cD6iPDzw4c/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 936288583,
+          "mode": "list",
+          "cachedResultName": "Form responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MBkdU2IwJy7J66BnEKzqLjp7JKGo6hJB8cD6iPDzw4c/edit#gid=936288583"
+        },
+        "event": "rowAdded",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "c8357998-faee-42bd-ab84-8a83d783996f",
+      "name": "Google Sheets Trigger",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "2hOLBhYbLILCtfqO",
+          "name": "Google Sheets Trigger account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=AIzaSyAuZQcHclyg1pVrhXpyeCkwAUsRBuYW-VI",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [\n    {\n      \"parts\": [\n        {\n          \"text\": \"You are an automated triage assistant for 'Nederlands de Baas'. Analyze this inbound inquiry and output a clean JSON object with NO markdown formatting (no ```json tags), containing exactly these keys:\\n- 'notes': Write a summaryization of the event/ collaboration. \\n- 'priority': choose strictly from ['High', 'Medium', 'Low'] based on urgency.\\n- 'category': choose strictly from ['Education', 'Corporate', 'Administrative', 'General'] based on the organization type and request.\\n- 'suggestedOwner': assign to 'Anna' if education/training related, or 'Mark' if corporate/administrative.\\n\\nInquiry Data:\\n- Organization:{{ $json['Name of the organization / company '] }} \\n- Org Type:{{ $json['  Type of organization  '] }}\\n- Contact:{{ $json['  Contact Person Full Name'] }} \\n- Details:{{ $json['  Request Type / Details (Explain the event/ collaboration request clearly)'] }} \\n- Intended start date: {{ $json['Intended start date or event date'] }} \"\n        }\n      ]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        224,
+        0
+      ],
+      "id": "46860086-58d7-454b-b202-f683157ea4e4",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract raw text from Gemini response structure\nlet rawText = $input.item.json.candidates[0].content.parts[0].text;\n\n// Clean potential markdown blocks if Gemini includes them anyway\nrawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();\n\nconst parsedAI = JSON.parse(rawText);\n\n// Safely pull raw data from Google Sheets Trigger\nconst rawSheetData = $('Google Sheets Trigger').first().json;\n\n// Normalize all keys by trimming extra spaces around column names\nconst cleanSheetData = {};\nfor (const key in rawSheetData) {\n  cleanSheetData[key.trim()] = rawSheetData[key];\n}\n\nreturn {\n  json: {\n    ...cleanSheetData,\n    aiPriority: parsedAI.priority,\n    aiCategory: parsedAI.category,\n    aiOwner: parsedAI.suggestedOwner,\n    ainotes: parsedAI.notes\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "32de4099-af03-4897-ad12-6594e734e3d0",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "resource": "boardItem",
+        "boardId": "5105804369",
+        "groupId": "new_group29179",
+        "name": "={{ $json['Name of the organization / company'] }}",
+        "additionalFields": {
+          "columnValues": "={\n  \"text_mm80de6\": \"{{ $json['Name of the organization / company'] }}\",\n  \"text_mm80kadw\": \"{{ $json['Contact Person Full Name'] }}\",\n  \"text_mm80h8kp\": \"{{ $json['Email address'] }}\",\n  \"text_mm807wbr\": \"{{ $json['Phone number'] }}\",\n  \"text_mm809wtk\": \"{{ $json.Timestamp }}\",\n  \"text_mm80528k\": \"{{ $json['Intended start date or event date'] }}\",\n  \"long_text_mm80erdm\": \"{{ $json['Request Type / Details (Explain the event/ collaboration request clearly)'] }}\",\n  \"text\": \"{{ $json.ainotes }}\",\n  \"priority\": \"{{ $json.aiPriority }}\",\n  \"text_mm80mqwc\": \"{{ $json.aiOwner }}\"\n} "
+        }
+      },
+      "type": "n8n-nodes-base.mondayCom",
+      "typeVersion": 1,
+      "position": [
+        672,
+        0
+      ],
+      "id": "2e552bee-a5b9-4c36-8c2e-490662e207b5",
+      "name": "Create an item in a board's group",
+      "alwaysOutputData": true,
+      "credentials": {
+        "mondayComApi": {
+          "id": "lDImh39ItFaQxX2r",
+          "name": "Monday.com account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "chakradharchakri959@gmail.com",
+        "subject": "You got a new client",
+        "emailType": "text",
+        "message": "=Hello  {{ $('Code in JavaScript').item.json.aiOwner }},\n\nYou got a new client. Kindly review his details and take action.\n\nName of organisation: {{ $('Code in JavaScript').item.json['Name of the organization / company'] }}\nType of organisation: {{ $('Code in JavaScript').item.json['Type of organization'] }}\nFull Name: {{ $('Code in JavaScript').item.json['Contact Person Full Name'] }}\nshort summary: {{ $('Code in JavaScript').item.json.ainotes }}\nPriority: {{ $('Code in JavaScript').item.json.aiPriority }}\nHave a great day :)\n\nThank you,\nCompany",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        928,
+        -128
+      ],
+      "id": "ef877b9d-06cd-44fd-b99f-27bcf0fc52cb",
+      "name": "Send email to Employee",
+      "webhookId": "152ad5ff-412f-49a7-bc18-4d6d835b7acf",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hKkRjnqoOHmMeHhb",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Code in JavaScript').item.json['Email address'] }}",
+        "subject": "Submission Confirmation",
+        "emailType": "text",
+        "message": "=Dear  {{ $('Code in JavaScript').item.json['Contact Person Full Name'] }},\n\nThis is for to inform you that we have recieved your collaboration/ Event Request. {{ $('Code in JavaScript').item.json.aiOwner }} from our team will get back to as soon as possible.\n\nThank you for you interest. \n\nKind Regards,\nCompany",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        928,
+        64
+      ],
+      "id": "ee99760e-71a4-4cc7-89c2-029c729972e0",
+      "name": "Send a email to client",
+      "webhookId": "2c9b07cb-c38c-40ab-99a2-d46c36e8b9f1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hKkRjnqoOHmMeHhb",
+          "name": "Gmail account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Sheets Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Create an item in a board's group",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an item in a board's group": {
+      "main": [
+        [
+          {
+            "node": "Send email to Employee",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send a email to client",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send email to Employee": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "d86303d7-e827-47b3-9583-10684248272c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "edb24a28369437f107d184f1f24cc50a0053c144ad40ba69d690b08115f25c90"
+  },
+  "nodeGroups": [],
+  "id": "2pU3dEImeiW8BTrq",
+  "tags": []
+}
